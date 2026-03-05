@@ -1,0 +1,11 @@
+﻿git version 2.53.0.windows.1
+On branch master
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   git_status_check.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	diag.txt
+	diag_utf8.txt
+

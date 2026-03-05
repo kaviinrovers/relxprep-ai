@@ -1,0 +1,16 @@
+﻿
+Name                  
+----                  
+client                
+server                
+supabase              
+.gitignore            
+diag.txt              
+diag_gh.txt           
+diag_git_locations.txt
+diag_nested.txt       
+diag_utf8.txt         
+dir_list.txt          
+git_status_check.txt  
+
+

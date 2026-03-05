@@ -1,0 +1,15 @@
+﻿
+FullName                  
+--------                  
+C:\Users\ELCOT\RELXPREP...
+
+
+On branch master
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   diag.txt
+	new file:   diag_gh.txt
+	new file:   diag_nested.txt
+	new file:   diag_utf8.txt
+	new file:   git_status_check.txt
+
