@@ -35,6 +35,11 @@ app.use('/api/questions', questionRoutes);
 app.use('/api/mock-tests', mockTestRoutes);
 app.use('/api/proctor', proctorRoutes);
 
+// Root route
+app.get('/', (req, res) => {
+    res.send('RelxPrep AI Backend is running 🚀');
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
