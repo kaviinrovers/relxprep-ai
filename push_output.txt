@@ -1,0 +1,21 @@
+﻿git : remote: Repository 
+not found.
+At line:1 char:1
++ git push -u origin 
+master 2>&1 | Out-File 
+-FilePath push_output.txt 
+- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (r  
+  emote: Repository not   
+  found.:String) [], R    
+emoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+fatal: repository 'https:/
+/github.com/kaviinrovers/r
+elxprep-ai.git/' not found
