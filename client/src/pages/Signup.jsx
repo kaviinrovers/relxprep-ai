@@ -11,6 +11,7 @@ export default function Signup() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [emailSent, setEmailSent] = useState(false);
     const { signUp } = useAuth();
     const navigate = useNavigate();
 
@@ -26,7 +27,14 @@ export default function Signup() {
         setLoading(true);
 
         try {
-            await signUp(email, password, fullName);
+            const data = await signUp(email, password, fullName);
+            
+            if (data?.user && !data?.session) {
+                setEmailSent(true);
+                setLoading(false);
+                return;
+            }
+            
             navigate('/dashboard');
         } catch (err) {
             setError(err.message || 'Failed to create account');
@@ -72,6 +80,28 @@ export default function Signup() {
                                 {error}
                             </motion.div>
                         )}
+                        
+                        {emailSent && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm space-y-2"
+                            >
+                                <p className="font-semibold">Check your email!</p>
+                                <p>We sent a confirmation link to <strong>{email}</strong></p>
+                                <p className="text-white/60">Click the link to activate your account, then come back to login.</p>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEmailSent(false);
+                                        navigate('/login');
+                                    }}
+                                    className="mt-2 w-full py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 transition-colors"
+                                >
+                                    Go to Login
+                                </button>
+                            </motion.div>
+                        )}
 
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-white/60" htmlFor="fullName">
@@ -87,6 +117,7 @@ export default function Signup() {
                                     className="input-field pl-11"
                                     placeholder="John Doe"
                                     required
+                                    disabled={emailSent}
                                 />
                             </div>
                         </div>
@@ -105,6 +136,7 @@ export default function Signup() {
                                     className="input-field pl-11"
                                     placeholder="you@example.com"
                                     required
+                                    disabled={emailSent}
                                 />
                             </div>
                         </div>
@@ -124,12 +156,14 @@ export default function Signup() {
                                     placeholder="At least 6 characters"
                                     required
                                     minLength={6}
+                                    disabled={emailSent}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
                                     aria-label="Toggle password visibility"
+                                    disabled={emailSent}
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
@@ -138,7 +172,7 @@ export default function Signup() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || emailSent}
                             className="btn-primary w-full flex items-center justify-center gap-2"
                             id="signup-submit"
                         >
