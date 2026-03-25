@@ -54,7 +54,7 @@ function App() {
         );
     }
 
-    if (!user && !loading) {
+    if (!user) {
         return (
             <div style={{ backgroundColor: '#020617', minHeight: '100vh' }}>
                 <Routes>
