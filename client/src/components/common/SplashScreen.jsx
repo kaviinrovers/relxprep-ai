@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 
 export default function SplashScreen() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-surface-900 overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-surface-900 overflow-hidden" style={{ backgroundColor: '#020617' }}>
             <div className="animated-bg" />
 
             {/* Glowing orbs background */}
