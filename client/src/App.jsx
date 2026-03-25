@@ -62,24 +62,11 @@ function App() {
     return (
         <div style={{ backgroundColor: '#020617', minHeight: '100vh' }}>
             <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/" element={<AppLayout />}>
-                    <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="exams" element={<ExamMode />} />
-                    <Route path="timer" element={<StudyTimer />} />
-                    <Route path="syllabus" element={<SyllabusTracker />} />
-                    <Route path="planner" element={<AIPlanner />} />
-                    <Route path="questions" element={<QuestionAnalyzer />} />
-                    <Route path="important" element={<ImportantQuestions />} />
-                    <Route path="answer-guide" element={<AnswerGuide />} />
-                    <Route path="mock-test" element={<MockTest />} />
-                    <Route path="weak-topics" element={<WeakTopics />} />
-                    <Route path="flashcards" element={<Flashcards />} />
-                    <Route path="readiness" element={<ReadinessScore />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/" element={
+                    <ProtectedRoute>
+                        <AppLayout />
+                    </ProtectedRoute>
+                } />
             </Routes>
         </div>
     );
