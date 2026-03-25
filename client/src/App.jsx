@@ -18,18 +18,38 @@ import WeakTopics from './pages/WeakTopics';
 import Flashcards from './pages/Flashcards';
 import ReadinessScore from './pages/ReadinessScore';
 
-function App() {
-    const [splashDone, setSplashDone] = useState(false);
+export default function App() {
+    const [showSplash, setShowSplash] = useState(true);
     const { user, loading } = useAuth();
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setSplashDone(true);
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, []);
+        if (!loading) {
+            const timer = setTimeout(() => {
+                setShowSplash(false);
+            }, 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
 
-    if (!splashDone) {
+    // 1. Loading state
+    if (loading) {
+        return (
+            <div style={{ 
+                minHeight: '100vh', 
+                backgroundColor: '#020617',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                gap: '1rem'
+            }}>
+                <p style={{ color: 'white', fontSize: '1.5rem' }}>Loading...</p>
+            </div>
+        );
+    }
+
+    // 2. Splash screen
+    if (showSplash) {
         return (
             <div style={{ 
                 minHeight: '100vh', 
@@ -46,14 +66,13 @@ function App() {
                     borderRadius: '16px',
                     background: 'linear-gradient(135deg, #4f46e5, #7c3aed)'
                 }} />
-                <p style={{ color: '#818cf8', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                    RelxPrep AI
-                </p>
+                <p style={{ color: '#818cf8', fontSize: '1.5rem', fontWeight: 'bold' }}>RelxPrep AI</p>
                 <p style={{ color: 'rgba(255,255,255,0.4)' }}>Loading...</p>
             </div>
         );
     }
 
+    // 3. No user → Login page
     if (!user) {
         return (
             <div style={{ backgroundColor: '#020617', minHeight: '100vh' }}>
@@ -66,6 +85,7 @@ function App() {
         );
     }
 
+    // 4. User exists → Dashboard
     return (
         <div style={{ backgroundColor: '#020617', minHeight: '100vh' }}>
             <Routes>
@@ -93,5 +113,3 @@ function App() {
         </div>
     );
 }
-
-export default App;
