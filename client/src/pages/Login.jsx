@@ -10,7 +10,7 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { signIn } = useAuth();
+    const { signIn, demoLogin } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -19,6 +19,11 @@ export default function Login() {
         setLoading(true);
 
         try {
+            if (email === 'demo@relxprep.com' && password === 'demo123') {
+                demoLogin();
+                navigate('/dashboard');
+                return;
+            }
             await signIn(email, password);
             navigate('/dashboard');
         } catch (err) {
@@ -29,86 +34,108 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative">
-            <div className="animated-bg" />
-
-            {/* Decorative elements */}
-            <div className="absolute top-20 left-20 w-72 h-72 bg-brand-500/10 rounded-full blur-[100px]" />
-            <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/8 rounded-full blur-[120px]" />
+        <div className="min-h-screen flex items-center justify-center p-4" 
+             style={{ backgroundColor: '#020617', position: 'relative', zIndex: 10 }}>
+            <div style={{
+                position: 'fixed',
+                top: '5rem',
+                left: '5rem',
+                width: '288px',
+                height: '288px',
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15), transparent 70%)',
+                filter: 'blur(60px)'
+            }} />
 
             <motion.div
-                className="w-full max-w-md relative"
+                className="w-full max-w-md relative z-20"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.6 }}
             >
-                {/* Logo */}
                 <div className="text-center mb-8">
-                    <motion.div
-                        className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-bg shadow-lg shadow-brand-500/30 mb-4"
-                        whileHover={{ scale: 1.05, rotate: 5 }}
+                    <div
+                        className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
+                        style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed, #db2777)' }}
                     >
                         <Sparkles className="w-8 h-8 text-white" />
-                    </motion.div>
-                    <h1 className="text-3xl font-bold text-white">
+                    </div>
+                    <h1 className="text-3xl font-bold" style={{ color: 'white' }}>
                         Welcome Back
                     </h1>
-                    <p className="text-white/40 mt-1">
-                        Sign in to <span className="text-brand-400">RelxPrep AI</span>
+                    <p className="mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        Sign in to <span style={{ color: '#818cf8' }}>RelxPrep AI</span>
                     </p>
                 </div>
 
-                {/* Login Card */}
-                <div className="glass-card p-8">
-                    <form onSubmit={handleSubmit} className="space-y-5" id="login-form">
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
-                            >
-                                {error}
-                            </motion.div>
-                        )}
+                <div className="p-8 rounded-2xl" 
+                     style={{ 
+                         background: 'rgba(255,255,255,0.05)', 
+                         backdropFilter: 'blur(24px)',
+                         border: '1px solid rgba(255,255,255,0.1)'
+                     }}>
+                    {error && (
+                        <div className="p-3 rounded-xl mb-4 text-sm" 
+                             style={{ 
+                                 background: 'rgba(239,68,68,0.1)', 
+                                 border: '1px solid rgba(239,68,68,0.2)',
+                                 color: '#f87171'
+                             }}>
+                            {error}
+                        </div>
+                    )}
 
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-white/60" htmlFor="email">
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div>
+                            <label className="block text-sm font-medium mb-1.5" 
+                                   style={{ color: 'rgba(255,255,255,0.6)' }}>
                                 Email Address
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" 
+                                      style={{ color: 'rgba(255,255,255,0.3)' }} />
                                 <input
-                                    id="email"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="input-field pl-11"
+                                    className="w-full px-4 py-3 pl-11 rounded-xl outline-none"
+                                    style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        color: 'white'
+                                    }}
                                     placeholder="you@example.com"
                                     required
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-white/60" htmlFor="password">
+                        <div>
+                            <label className="block text-sm font-medium mb-1.5" 
+                                   style={{ color: 'rgba(255,255,255,0.6)' }}>
                                 Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" 
+                                      style={{ color: 'rgba(255,255,255,0.3)' }} />
                                 <input
-                                    id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="input-field pl-11 pr-11"
-                                    placeholder="••••••••"
+                                    className="w-full px-4 py-3 pl-11 pr-11 rounded-xl outline-none"
+                                    style={{
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        color: 'white'
+                                    }}
+                                    placeholder="Enter password"
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-                                    aria-label="Toggle password visibility"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2"
+                                    style={{ color: 'rgba(255,255,255,0.3)' }}
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
@@ -118,35 +145,51 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="btn-primary w-full flex items-center justify-center gap-2"
-                            id="login-submit"
+                            className="w-full py-3 rounded-xl font-semibold text-white transition-all"
+                            style={{ 
+                                background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                                opacity: loading ? 0.5 : 1,
+                                cursor: loading ? 'not-allowed' : 'pointer'
+                            }}
                         >
-                            {loading ? (
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    <LogIn className="w-4 h-4" />
-                                    Sign In
-                                </>
-                            )}
+                            {loading ? 'Loading...' : 'Sign In'}
+                        </button>
+
+                        <div className="relative flex items-center py-1">
+                            <div className="flex-grow" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}></div>
+                            <span className="mx-4 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>OR</span>
+                            <div className="flex-grow" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}></div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                demoLogin();
+                                navigate('/dashboard');
+                            }}
+                            className="w-full py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                            style={{ 
+                                background: 'rgba(99,102,241,0.1)',
+                                border: '1px solid rgba(99,102,241,0.3)',
+                                color: '#a5b4fc'
+                            }}
+                        >
+                            <Sparkles className="w-4 h-4" />
+                            Quick Admin Login
                         </button>
                     </form>
 
                     <div className="mt-6 text-center">
-                        <p className="text-white/40 text-sm">
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>
                             Don't have an account?{' '}
-                            <Link
-                                to="/signup"
-                                className="text-brand-400 hover:text-brand-300 font-medium transition-colors"
-                            >
+                            <Link to="/signup" style={{ color: '#818cf8', fontWeight: 500 }}>
                                 Create Account
                             </Link>
                         </p>
                     </div>
                 </div>
 
-                {/* Footer */}
-                <p className="text-center text-white/20 text-xs mt-6">
+                <p className="text-center text-xs mt-6" style={{ color: 'rgba(255,255,255,0.2)' }}>
                     Relax. Prepare. Succeed.
                 </p>
             </motion.div>

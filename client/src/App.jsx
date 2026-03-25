@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
-import SplashScreen from './components/common/SplashScreen';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AppLayout from './components/layout/AppLayout';
@@ -20,31 +19,39 @@ import Flashcards from './pages/Flashcards';
 import ReadinessScore from './pages/ReadinessScore';
 
 function App() {
-    const [showSplash, setShowSplash] = useState(true);
-    const [initTimeout, setInitTimeout] = useState(false);
+    const [splashDone, setSplashDone] = useState(false);
     const { user, loading } = useAuth();
 
-    useEffect(function() {
-        const fallbackTimer = setTimeout(function() {
-            console.log('Auth init timeout - proceeding with app');
-            setInitTimeout(true);
-            setShowSplash(false);
-        }, 8000);
-        
-        return function() { clearTimeout(fallbackTimer); };
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSplashDone(true);
+        }, 3000);
+        return () => clearTimeout(timer);
     }, []);
 
-    useEffect(function() {
-        if (!loading || initTimeout) {
-            const splashTimer = setTimeout(function() {
-                setShowSplash(false);
-            }, 500);
-            return function() { clearTimeout(splashTimer); };
-        }
-    }, [loading, initTimeout]);
-
-    if (showSplash) {
-        return <SplashScreen />;
+    if (!splashDone) {
+        return (
+            <div style={{ 
+                minHeight: '100vh', 
+                backgroundColor: '#020617',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                gap: '1rem'
+            }}>
+                <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #4f46e5, #7c3aed)'
+                }} />
+                <p style={{ color: '#818cf8', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                    RelxPrep AI
+                </p>
+                <p style={{ color: 'rgba(255,255,255,0.4)' }}>Loading...</p>
+            </div>
+        );
     }
 
     if (!user && !loading) {
@@ -66,7 +73,22 @@ function App() {
                     <ProtectedRoute>
                         <AppLayout />
                     </ProtectedRoute>
-                } />
+                }>
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="exams" element={<ExamMode />} />
+                    <Route path="timer" element={<StudyTimer />} />
+                    <Route path="syllabus" element={<SyllabusTracker />} />
+                    <Route path="planner" element={<AIPlanner />} />
+                    <Route path="questions" element={<QuestionAnalyzer />} />
+                    <Route path="important" element={<ImportantQuestions />} />
+                    <Route path="answer-guide" element={<AnswerGuide />} />
+                    <Route path="mock-test" element={<MockTest />} />
+                    <Route path="weak-topics" element={<WeakTopics />} />
+                    <Route path="flashcards" element={<Flashcards />} />
+                    <Route path="readiness" element={<ReadinessScore />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </div>
     );
