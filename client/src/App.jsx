@@ -19,27 +19,27 @@ import WeakTopics from './pages/WeakTopics';
 import Flashcards from './pages/Flashcards';
 import ReadinessScore from './pages/ReadinessScore';
 
-export default function App() {
+function App() {
     const [showSplash, setShowSplash] = useState(true);
     const [initTimeout, setInitTimeout] = useState(false);
     const { user, loading } = useAuth();
 
-    useEffect(() => {
-        const fallbackTimer = setTimeout(() => {
+    useEffect(function() {
+        const fallbackTimer = setTimeout(function() {
             console.log('Auth init timeout - proceeding with app');
             setInitTimeout(true);
             setShowSplash(false);
         }, 8000);
         
-        return () => clearTimeout(fallbackTimer);
+        return function() { clearTimeout(fallbackTimer); };
     }, []);
 
-    useEffect(() => {
+    useEffect(function() {
         if (!loading || initTimeout) {
-            const splashTimer = setTimeout(() => {
+            const splashTimer = setTimeout(function() {
                 setShowSplash(false);
             }, 500);
-            return () => clearTimeout(splashTimer);
+            return function() { clearTimeout(splashTimer); };
         }
     }, [loading, initTimeout]);
 
@@ -47,26 +47,24 @@ export default function App() {
         return <SplashScreen />;
     }
 
+    if (!user && !loading) {
+        return (
+            <div style={{ backgroundColor: '#020617', minHeight: '100vh' }}>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                </Routes>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen" style={{ backgroundColor: '#020617' }}>
-            <div className="animated-bg" />
+        <div style={{ backgroundColor: '#020617', minHeight: '100vh' }}>
             <Routes>
-                <Route
-                    path="/login"
-                    element={user ? <Navigate to="/dashboard" replace /> : <Login />}
-                />
-                <Route
-                    path="/signup"
-                    element={user ? <Navigate to="/dashboard" replace /> : <Signup />}
-                />
-                <Route
-                    path="/"
-                    element={
-                        <ProtectedRoute>
-                            <AppLayout />
-                        </ProtectedRoute>
-                    }
-                >
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/" element={<AppLayout />}>
                     <Route index element={<Navigate to="/dashboard" replace />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="exams" element={<ExamMode />} />
@@ -86,3 +84,5 @@ export default function App() {
         </div>
     );
 }
+
+export default App;
