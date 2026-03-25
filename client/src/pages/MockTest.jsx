@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../services/api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     ClipboardCheck, Mic, MicOff, Send, Loader, Camera, AlertTriangle,
-    CheckCircle, XCircle, Eye,
+    CheckCircle, XCircle, Eye, ShieldAlert, UserX,
 } from 'lucide-react';
 
 export default function MockTest() {
@@ -26,8 +26,38 @@ export default function MockTest() {
     const [warnings, setWarnings] = useState(0);
     const [terminated, setTerminated] = useState(false);
     const [cameraActive, setCameraActive] = useState(false);
+    const [warningPopup, setWarningPopup] = useState(null); // { type, message }
+    const [faceDetected, setFaceDetected] = useState(true);
+    const [noFaceTimer, setNoFaceTimer] = useState(0);
     const videoRef = useRef(null);
+    const canvasRef = useRef(null);
     const recognitionRef = useRef(null);
+    const warningsRef = useRef(0);
+    const faceCheckIntervalRef = useRef(null);
+
+    // Keep warningsRef in sync
+    useEffect(() => {
+        warningsRef.current = warnings;
+    }, [warnings]);
+
+    // Show warning popup with auto-dismiss
+    const showWarning = useCallback((type, message) => {
+        setWarningPopup({ type, message });
+        setTimeout(() => setWarningPopup(null), 4000);
+    }, []);
+
+    // Add a violation warning
+    const addViolation = useCallback((reason) => {
+        const newCount = warningsRef.current + 1;
+        setWarnings(newCount);
+        if (newCount >= 3) {
+            setTerminated(true);
+            stopCamera();
+            stopFaceDetection();
+        } else {
+            showWarning('violation', `⚠️ Warning ${newCount}/3: ${reason}`);
+        }
+    }, [showWarning]);
 
     // Camera setup for proctoring
     const startCamera = async () => {
@@ -37,41 +67,148 @@ export default function MockTest() {
                 videoRef.current.srcObject = stream;
             }
             setCameraActive(true);
+            return true;
         } catch (err) {
             console.error('Camera access denied:', err);
+            showWarning('camera', '📷 Camera access denied. Proctoring requires camera permission.');
+            return false;
         }
     };
 
     const stopCamera = () => {
         if (videoRef.current?.srcObject) {
             videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+            videoRef.current.srcObject = null;
         }
         setCameraActive(false);
     };
 
-    // Tab visibility monitoring
+    // ===== FACE DETECTION using canvas pixel analysis =====
+    const detectFace = useCallback(() => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!video || !canvas || !video.srcObject || video.readyState < 2) return;
+
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        canvas.width = 160;
+        canvas.height = 120;
+        ctx.drawImage(video, 0, 0, 160, 120);
+
+        const imageData = ctx.getImageData(0, 0, 160, 120);
+        const data = imageData.data;
+
+        // Count skin-tone pixels in the center region (where face should be)
+        let skinPixels = 0;
+        let totalPixels = 0;
+        const centerX1 = 40, centerX2 = 120;
+        const centerY1 = 10, centerY2 = 100;
+
+        for (let y = centerY1; y < centerY2; y++) {
+            for (let x = centerX1; x < centerX2; x++) {
+                const i = (y * 160 + x) * 4;
+                const r = data[i], g = data[i + 1], b = data[i + 2];
+
+                // Skin color detection (works for various skin tones)
+                const isSkin = (
+                    r > 60 && g > 40 && b > 20 &&
+                    r > g && r > b &&
+                    Math.abs(r - g) > 15 &&
+                    r - b > 15 &&
+                    // Exclude very bright (white wall) and very dark pixels
+                    r < 240 && g < 230 &&
+                    !(r > 200 && g > 200 && b > 200) // not white
+                );
+
+                if (isSkin) skinPixels++;
+                totalPixels++;
+            }
+        }
+
+        const skinRatio = skinPixels / totalPixels;
+        const hasFace = skinRatio > 0.08; // At least 8% skin pixels = face present
+
+        setFaceDetected(hasFace);
+
+        if (!hasFace) {
+            setNoFaceTimer((prev) => {
+                const newVal = prev + 1;
+                // If no face for 5 seconds (5 checks at 1s interval), warn
+                if (newVal === 5) {
+                    addViolation('Face not detected — look at the camera');
+                    return 0;
+                }
+                return newVal;
+            });
+        } else {
+            setNoFaceTimer(0);
+        }
+    }, [addViolation]);
+
+    const startFaceDetection = useCallback(() => {
+        if (faceCheckIntervalRef.current) clearInterval(faceCheckIntervalRef.current);
+        faceCheckIntervalRef.current = setInterval(detectFace, 1000);
+    }, [detectFace]);
+
+    const stopFaceDetection = () => {
+        if (faceCheckIntervalRef.current) {
+            clearInterval(faceCheckIntervalRef.current);
+            faceCheckIntervalRef.current = null;
+        }
+    };
+
+    // Cleanup camera & mic on page exit
+    useEffect(() => {
+        return () => {
+            if (videoRef.current?.srcObject) {
+                videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+            }
+            if (recognitionRef.current) {
+                try { recognitionRef.current.stop(); } catch (e) { /* ignore */ }
+            }
+            stopFaceDetection();
+        };
+    }, []);
+
+    // ===== TAB & WINDOW SWITCH DETECTION =====
     useEffect(() => {
         if (!mode || terminated) return;
 
+        // Detect tab switch
         const handleVisibilityChange = () => {
-            if (document.hidden && mode) {
-                const newWarnings = warnings + 1;
-                setWarnings(newWarnings);
-                if (newWarnings >= 3) {
-                    setTerminated(true);
-                    stopCamera();
-                }
+            if (document.hidden) {
+                addViolation('Tab switch detected — stay on the test page');
             }
         };
 
+        // Detect alt-tab / window switch
+        const handleWindowBlur = () => {
+            addViolation('Window switch detected — do not leave the test window');
+        };
+
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, [mode, warnings, terminated]);
+        window.addEventListener('blur', handleWindowBlur);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleWindowBlur);
+        };
+    }, [mode, terminated, addViolation]);
+
+    // Start face detection when camera becomes active
+    useEffect(() => {
+        if (cameraActive && mode) {
+            // Wait a moment for camera to initialize
+            const timer = setTimeout(() => startFaceDetection(), 2000);
+            return () => clearTimeout(timer);
+        } else {
+            stopFaceDetection();
+        }
+    }, [cameraActive, mode, startFaceDetection]);
 
     // Voice recognition
     const startVoiceInput = (questionIndex) => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert('Speech recognition not supported in this browser.');
+            alert('Speech recognition not supported in this browser. Use Chrome or Edge.');
             return;
         }
 
@@ -126,19 +263,56 @@ export default function MockTest() {
         }
     };
 
-    const startTest = () => {
+    const startTest = async () => {
         if (!subject.trim()) return;
-        startCamera();
+        await startCamera();
     };
+
+    // ===== WARNING POPUP OVERLAY =====
+    const WarningPopup = () => (
+        <AnimatePresence>
+            {warningPopup && (
+                <motion.div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                >
+                    <motion.div
+                        className="bg-red-950/90 border-2 border-red-500/50 rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl shadow-red-500/20"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        transition={{ type: 'spring', damping: 15 }}
+                    >
+                        <ShieldAlert className="w-16 h-16 text-red-400 mx-auto mb-4 animate-pulse" />
+                        <h3 className="text-xl font-bold text-red-400 mb-2">Proctoring Alert!</h3>
+                        <p className="text-white/80 text-sm mb-4">{warningPopup.message}</p>
+                        <div className="flex items-center justify-center gap-2 text-amber-400 text-sm font-medium">
+                            <AlertTriangle className="w-4 h-4" />
+                            {3 - warnings} warning(s) remaining before termination
+                        </div>
+                        <button
+                            onClick={() => setWarningPopup(null)}
+                            className="mt-4 px-6 py-2 bg-red-500/20 text-red-300 rounded-xl text-sm font-medium hover:bg-red-500/30 transition-colors border border-red-500/30"
+                        >
+                            I Understand
+                        </button>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 
     if (terminated) {
         return (
             <div className="page-container">
+                <WarningPopup />
                 <div className="glass-card p-12 text-center">
                     <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
                     <h2 className="text-2xl font-bold text-white mb-2">Test Terminated</h2>
                     <p className="text-white/40 mb-4">You received 3 violations. Please wait 10 minutes before retaking.</p>
-                    <div className="text-red-400 text-sm">Violations: Tab switching detected {warnings} times</div>
+                    <div className="text-red-400 text-sm">Violations: {warnings} detected</div>
                 </div>
             </div>
         );
@@ -192,12 +366,23 @@ export default function MockTest() {
 
     return (
         <div className="page-container">
+            <WarningPopup />
+
+            {/* Hidden canvas for face detection */}
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+
             <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                     <h1 className="page-title">Mock Test — {subject}</h1>
                     <p className="text-white/40 mt-1">{mode === 'written' ? 'Written' : 'Voice'} Mode</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {/* Face detection status */}
+                    <div className={`px-3 py-1.5 rounded-xl text-sm flex items-center gap-2 ${faceDetected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400 animate-pulse'
+                        }`}>
+                        {faceDetected ? <Eye className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
+                        {faceDetected ? 'Face OK' : 'No Face!'}
+                    </div>
                     {/* Warnings */}
                     <div className={`px-3 py-1.5 rounded-xl text-sm font-medium flex items-center gap-2 ${warnings >= 2 ? 'bg-red-500/20 text-red-400' : warnings >= 1 ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'
                         }`}>
@@ -215,7 +400,8 @@ export default function MockTest() {
 
             {/* Camera Preview */}
             <div className="flex justify-end">
-                <div className="w-40 h-32 rounded-xl overflow-hidden border border-white/10 bg-black">
+                <div className={`w-40 h-32 rounded-xl overflow-hidden border-2 bg-black transition-colors ${faceDetected ? 'border-emerald-500/30' : 'border-red-500/50 shadow-lg shadow-red-500/20'
+                    }`}>
                     <video ref={videoRef} autoPlay muted className="w-full h-full object-cover" />
                 </div>
             </div>

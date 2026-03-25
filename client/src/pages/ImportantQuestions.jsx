@@ -10,10 +10,12 @@ export default function ImportantQuestions() {
     const [topics, setTopics] = useState('');
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const handleGenerate = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setError(null);
         try {
             const topicsList = topics.split(',').map((t) => t.trim()).filter(Boolean);
             const data = await apiRequest('/api/ai/important-questions', {
@@ -21,9 +23,18 @@ export default function ImportantQuestions() {
                 body: { subject, topics: topicsList },
                 token: session?.access_token,
             });
-            setQuestions(data.questions || []);
-        } catch (err) { console.error(err); }
-        finally { setLoading(false); }
+
+            if (data && data.questions) {
+                setQuestions(data.questions);
+            } else {
+                throw new Error('No questions generated. Please try again.');
+            }
+        } catch (err) {
+            console.error('Generation Error:', err);
+            setError(err.message || 'Failed to generate questions. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const downloadPDF = async () => {
@@ -65,6 +76,16 @@ export default function ImportantQuestions() {
                 Important Questions
             </h1>
             <p className="text-white/40 mt-1">AI-predicted important questions with appearance probability</p>
+
+            {error && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm mb-4"
+                >
+                    {error}
+                </motion.div>
+            )}
 
             <motion.div className="glass-card p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { apiRequest } from '../services/api';
+import { useDashboardStats } from '../hooks/useDashboardStats';
 import {
     Clock, CalendarDays, TrendingUp, BookOpen,
     Brain, Target, ChevronRight, Sparkles, Timer,
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Tooltip, ResponsiveContainer, AreaChart, Area, XAxis, YAxis } from 'recharts';
 
 const fadeUp = {
     initial: { opacity: 0, y: 20 },
@@ -15,38 +14,7 @@ const fadeUp = {
 
 export default function Dashboard() {
     const { user, session } = useAuth();
-    const [stats, setStats] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchStats();
-    }, []);
-
-    const fetchStats = async () => {
-        try {
-            const data = await apiRequest('/api/dashboard/stats', {
-                token: session?.access_token,
-            });
-            setStats(data);
-        } catch (err) {
-            console.error('Failed to fetch stats:', err);
-            // Use demo data if API fails
-            setStats({
-                todayStudyMinutes: 145,
-                weekStudyMinutes: 840,
-                upcomingExams: [
-                    { id: 1, subject: 'DBMS', exam_date: '2026-03-15' },
-                    { id: 2, subject: 'Operating Systems', exam_date: '2026-03-20' },
-                ],
-                syllabusCompletion: 65,
-                performanceLevel: 'Good',
-                totalUnits: 20,
-                completedUnits: 13,
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { stats, loading, error } = useDashboardStats(session);
 
     const formatTime = (minutes) => {
         const h = Math.floor(minutes / 60);
@@ -98,7 +66,9 @@ export default function Dashboard() {
                         <h1 className="page-title">
                             Welcome back{user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ''} 👋
                         </h1>
-                        <p className="text-white/40 mt-1">Here's your study overview for today</p>
+                        <p className="text-white/40 mt-1">
+                            {error ? 'Showing offline data' : "Here's your study overview for today"}
+                        </p>
                     </div>
                     <div className={getPerformanceBadge(stats?.performanceLevel)}>
                         {stats?.performanceLevel} Performance
@@ -228,10 +198,10 @@ export default function Dashboard() {
                                         </div>
                                         <div
                                             className={`px-3 py-1 rounded-full text-xs font-bold ${daysLeft <= 3
-                                                    ? 'bg-red-500/20 text-red-400'
-                                                    : daysLeft <= 7
-                                                        ? 'bg-amber-500/20 text-amber-400'
-                                                        : 'bg-emerald-500/20 text-emerald-400'
+                                                ? 'bg-red-500/20 text-red-400'
+                                                : daysLeft <= 7
+                                                    ? 'bg-amber-500/20 text-amber-400'
+                                                    : 'bg-emerald-500/20 text-emerald-400'
                                                 }`}
                                         >
                                             {daysLeft}d left

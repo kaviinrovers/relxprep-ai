@@ -1,0 +1,27 @@
+﻿git : error: src 
+refspec main does not 
+match any
+At line:1 char:65
++ ... nder issue for 
+Vercel" ; git push 
+origin main > 
+git_push_out.txt 2>&1
++                      
+        ~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (error: src re   
+ fs...s not match a    
+ny:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+error: failed to push 
+some refs to 'https://g
+ithub.com/kaviinrovers/
+relxprep-ai.git'
+
