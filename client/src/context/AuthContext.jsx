@@ -9,60 +9,115 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
+        let mounted = true;
+        const timeoutId = setTimeout(() => {
+            if (mounted && loading) {
+                console.warn('Auth initialization timeout - proceeding anyway');
+                setLoading(false);
+            }
+        }, 6000);
+
+        const initAuth = async () => {
+            try {
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                
+                if (!mounted) return;
+                
+                if (sessionError) {
+                    console.error('Session error:', sessionError.message);
+                    setError(sessionError.message);
+                    setLoading(false);
+                    clearTimeout(timeoutId);
+                    return;
+                }
+                
+                if (session) {
+                    setSession(session);
+                    setUser(session.user);
+                }
+                
+                setLoading(false);
+                clearTimeout(timeoutId);
+            } catch (err) {
+                if (!mounted) return;
+                console.error('Auth initialization failed:', err.message);
+                setError(err.message);
+                setLoading(false);
+                clearTimeout(timeoutId);
+            }
+        };
+
+        initAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (!mounted) return;
+            
+            if (event === 'SIGNED_OUT') {
+                setSession(null);
+                setUser(null);
+            } else if (session) {
+                setSession(session);
+                setUser(session.user);
+            }
             setLoading(false);
         });
 
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
-                setSession(session);
-                setUser(session?.user ?? null);
-                setLoading(false);
-            }
-        );
-
-        return () => subscription.unsubscribe();
+        return () => {
+            mounted = false;
+            clearTimeout(timeoutId);
+            subscription.unsubscribe();
+        };
     }, []);
 
     const signUp = async (email, password, fullName) => {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: {
-                data: { full_name: fullName },
-            },
+            options: { data: { full_name: fullName } },
         });
         if (error) throw error;
         return data;
     };
 
     const signIn = async (email, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         return data;
     };
 
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        try {
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error('Error signing out:', error);
+        } finally {
+            setUser(null);
+            setSession(null);
+        }
+    };
+
+    const demoLogin = () => {
+        const demoUser = { 
+            id: 'demo-user', 
+            email: 'demo@relxprep.com', 
+            user_metadata: { full_name: 'Demo User' } 
+        };
+        setUser(demoUser);
+        setSession({ user: demoUser, access_token: 'demo-token' });
     };
 
     const value = {
         user,
         session,
         loading,
+        error,
         signUp,
         signIn,
         signOut,
+        demoLogin,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

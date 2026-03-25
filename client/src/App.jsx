@@ -21,22 +21,36 @@ import ReadinessScore from './pages/ReadinessScore';
 
 export default function App() {
     const [showSplash, setShowSplash] = useState(true);
+    const [initTimeout, setInitTimeout] = useState(false);
     const { user, loading } = useAuth();
 
     useEffect(() => {
-        const timer = setTimeout(() => setShowSplash(false), 2500);
-        return () => clearTimeout(timer);
+        const fallbackTimer = setTimeout(() => {
+            console.log('Auth init timeout - proceeding with app');
+            setInitTimeout(true);
+            setShowSplash(false);
+        }, 8000);
+        
+        return () => clearTimeout(fallbackTimer);
     }, []);
+
+    useEffect(() => {
+        if (!loading || initTimeout) {
+            const splashTimer = setTimeout(() => {
+                setShowSplash(false);
+            }, 500);
+            return () => clearTimeout(splashTimer);
+        }
+    }, [loading, initTimeout]);
 
     if (showSplash) {
         return <SplashScreen />;
     }
 
     return (
-        <div className="min-h-screen bg-surface-900">
+        <div className="min-h-screen" style={{ backgroundColor: '#020617' }}>
             <div className="animated-bg" />
             <Routes>
-                {/* Public routes */}
                 <Route
                     path="/login"
                     element={user ? <Navigate to="/dashboard" replace /> : <Login />}
@@ -45,8 +59,6 @@ export default function App() {
                     path="/signup"
                     element={user ? <Navigate to="/dashboard" replace /> : <Signup />}
                 />
-
-                {/* Protected routes inside AppLayout */}
                 <Route
                     path="/"
                     element={
@@ -69,8 +81,6 @@ export default function App() {
                     <Route path="flashcards" element={<Flashcards />} />
                     <Route path="readiness" element={<ReadinessScore />} />
                 </Route>
-
-                {/* Catch all */}
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </div>
