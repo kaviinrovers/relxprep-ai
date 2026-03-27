@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -10,7 +10,7 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { signIn, demoLogin } = useAuth();
+    const { signIn } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -19,11 +19,6 @@ export default function Login() {
         setLoading(true);
 
         try {
-            if (email === 'demo@relxprep.com' && password === 'demo123') {
-                demoLogin();
-                navigate('/dashboard');
-                return;
-            }
             await signIn(email, password);
             navigate('/dashboard');
         } catch (err) {
@@ -153,29 +148,6 @@ export default function Login() {
                             }}
                         >
                             {loading ? 'Loading...' : 'Sign In'}
-                        </button>
-
-                        <div className="relative flex items-center py-1">
-                            <div className="flex-grow" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}></div>
-                            <span className="mx-4 text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>OR</span>
-                            <div className="flex-grow" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}></div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                demoLogin();
-                                navigate('/dashboard');
-                            }}
-                            className="w-full py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-                            style={{ 
-                                background: 'rgba(99,102,241,0.1)',
-                                border: '1px solid rgba(99,102,241,0.3)',
-                                color: '#a5b4fc'
-                            }}
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            Quick Admin Login
                         </button>
                     </form>
 

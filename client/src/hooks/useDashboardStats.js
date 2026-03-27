@@ -10,25 +10,6 @@ export function useDashboardStats(session) {
         setLoading(true);
         setError(null);
 
-        // Skip API call in demo mode
-        if (!session?.access_token || session.access_token === 'demo-token') {
-            setStats({
-                todayStudyMinutes: 45,
-                weekStudyMinutes: 320,
-                upcomingExams: [
-                    { id: 1, subject: 'DBMS', exam_date: new Date(Date.now() + 5 * 86400000).toISOString() },
-                    { id: 2, subject: 'Operating Systems', exam_date: new Date(Date.now() + 12 * 86400000).toISOString() },
-                ],
-                syllabusCompletion: 42,
-                performanceLevel: 'Good',
-                totalUnits: 8,
-                completedUnits: 3,
-                isDemo: true,
-            });
-            setLoading(false);
-            return;
-        }
-
         try {
             const data = await apiRequest('/api/dashboard/stats', {
                 token: session?.access_token,
@@ -46,7 +27,6 @@ export function useDashboardStats(session) {
                 performanceLevel: 'Average',
                 totalUnits: 0,
                 completedUnits: 0,
-                isDemo: true
             });
         } finally {
             setLoading(false);

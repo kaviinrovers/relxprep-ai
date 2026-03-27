@@ -99,16 +99,6 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const demoLogin = () => {
-        const demoUser = { 
-            id: 'demo-user', 
-            email: 'demo@relxprep.com', 
-            user_metadata: { full_name: 'Demo User' } 
-        };
-        setUser(demoUser);
-        setSession({ user: demoUser, access_token: 'demo-token' });
-    };
-
     const value = {
         user,
         session,
@@ -117,7 +107,6 @@ export function AuthProvider({ children }) {
         signUp,
         signIn,
         signOut,
-        demoLogin,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
