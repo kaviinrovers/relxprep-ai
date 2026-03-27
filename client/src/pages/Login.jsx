@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, LogIn, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
