@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { supabase } from '../config/supabase.js';
 import multer from 'multer';
 import Tesseract from 'tesseract.js';
+import pdf from 'pdf-parse';
 import { analyzeQuestions } from '../services/openaiService.js';
 import fs from 'fs';
 import path from 'path';
@@ -19,12 +20,24 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
 
         const { subject } = req.body;
         const filePath = req.file.path;
+        const fileExt = path.extname(req.file.originalname).toLowerCase();
+        let text = '';
 
-        // OCR extraction
-        const { data: { text } } = await Tesseract.recognize(filePath, 'eng');
+        // Extract text based on file type
+        if (fileExt === '.pdf') {
+            const dataBuffer = fs.readFileSync(filePath);
+            const data = await pdf(dataBuffer);
+            text = data.text;
+        } else {
+            // OCR extraction for images
+            const { data: { text: ocrText } } = await Tesseract.recognize(filePath, 'eng');
+            text = ocrText;
+        }
 
         // Clean up uploaded file
-        fs.unlinkSync(filePath);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
 
         // AI analysis
         const analysis = await analyzeQuestions(text, subject || 'General');

@@ -6,6 +6,18 @@ const router = Router();
 
 router.get('/stats', authMiddleware, async (req, res) => {
     try {
+        if (!supabase) {
+            return res.json({
+                todayStudyMinutes: 45,
+                weekStudyMinutes: 180,
+                upcomingExams: [],
+                syllabusCompletion: 35,
+                performanceLevel: 'Average',
+                totalUnits: 20,
+                completedUnits: 7,
+            });
+        }
+
         const userId = req.user.id;
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();

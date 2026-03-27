@@ -1,4 +1,6 @@
 ﻿git version 2.53.0.windows.1
+RelxPrep AI Builder
+build@relxprep.ai
 On branch master
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
@@ -7,5 +9,4 @@ Changes to be committed:
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
 	diag.txt
-	diag_utf8.txt
 
