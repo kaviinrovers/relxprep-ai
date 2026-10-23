@@ -4,6 +4,10 @@ export async function authMiddleware(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+        // Never let an unconfigured production server accept anonymous requests.
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(503).json({ message: 'Server auth is not configured (missing Supabase env vars)' });
+        }
         req.user = { id: 'dev-user-001' };
         req.token = 'dev-token';
         return next();

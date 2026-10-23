@@ -8,10 +8,21 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({ origin: "*" }));
+// CORS_ORIGIN can be a comma-separated list of allowed frontends (e.g. your Vercel URL).
+// Leave it unset to allow all origins (fine for development only).
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((o) => o.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+
+app.use(cors({
+    origin: allowedOrigins.length ? allowedOrigins : '*',
+}));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+import { supabase } from './config/supabase.js';
 
 // Import routes
 import dashboardRoutes from './routes/dashboard.js';
@@ -41,6 +52,21 @@ app.get('/', (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Database connection check (verifies Supabase is reachable with the configured keys)
+app.get('/api/health/db', async (req, res) => {
+    if (!supabase) {
+        return res.status(503).json({ status: 'error', database: 'not configured' });
+    }
+    try {
+        const { error } = await supabase.from('exams').select('id', { head: true, count: 'exact' }).limit(1);
+        if (error) throw error;
+        res.json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
+    } catch (err) {
+        console.error('DB health check failed:', err.message);
+        res.status(503).json({ status: 'error', database: 'unreachable', message: err.message });
+    }
 });
 
 // Error handler

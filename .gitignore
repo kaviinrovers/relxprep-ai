@@ -20,3 +20,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .vercel
+
+# Diagnostics / local helper output
+*.log
+*_out.txt
+*_output.txt
+build_log*.txt
+diag*.txt
+*.zip
+*.ps1
+*.bat

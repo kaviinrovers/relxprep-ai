@@ -8,6 +8,10 @@ const openai = new OpenAI({
     baseURL: 'https://api.groq.com/openai/v1',
 });
 
+// mixtral-8x7b-32768 was retired by Groq, so every AI call failed with a 400/404.
+// Default to a currently supported model; override with GROQ_MODEL if needed.
+const AI_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+
 export async function generateStudyPlan(subject, examDate, units) {
     const prompt = `You are a study planning expert. Create a detailed daily study plan for a student.
 
@@ -26,7 +30,7 @@ Generate a structured JSON response with this format:
 Consider spacing difficult topics across multiple days. Include revision days before the exam.`;
 
     const response = await openai.chat.completions.create({
-        model: 'mixtral-8x7b-32768',
+        model: AI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         response_format: { type: 'json_object' },
@@ -54,7 +58,7 @@ Return a JSON response with:
 }`;
 
     const response = await openai.chat.completions.create({
-        model: 'mixtral-8x7b-32768',
+        model: AI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.5,
         response_format: { type: 'json_object' },
@@ -77,7 +81,7 @@ Return a JSON response:
 Include at least 15 questions. Vary the marks (2, 5, 13, 16).`;
 
     const response = await openai.chat.completions.create({
-        model: 'mixtral-8x7b-32768',
+        model: AI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.6,
         response_format: { type: 'json_object' },
@@ -105,7 +109,7 @@ Return JSON:
 }`;
 
     const response = await openai.chat.completions.create({
-        model: 'mixtral-8x7b-32768',
+        model: AI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
         response_format: { type: 'json_object' },
@@ -130,7 +134,7 @@ Return JSON:
 }`;
 
     const response = await openai.chat.completions.create({
-        model: 'mixtral-8x7b-32768',
+        model: AI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.5,
         response_format: { type: 'json_object' },
@@ -152,7 +156,7 @@ Return JSON:
 Generate at least 10 flashcards with concise but complete answers.`;
 
     const response = await openai.chat.completions.create({
-        model: 'mixtral-8x7b-32768',
+        model: AI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.6,
         response_format: { type: 'json_object' },
@@ -183,7 +187,7 @@ Return JSON:
 }`;
 
     const response = await openai.chat.completions.create({
-        model: 'mixtral-8x7b-32768',
+        model: AI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
         response_format: { type: 'json_object' },
